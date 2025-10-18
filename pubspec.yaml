@@ -1,7 +1,16 @@
 name: ios_swipe
 description: "Ios 26 swipe - go_router."
 version: 0.0.1
-homepage: https://github.com/exeshka
+homepage: https://github.com/exeshka/ios_swipe
+issue_tracker: https://github.com/exeshka/ios_swipe/issues
+documentation: https://github.com/exeshka/ios_swipe#readme
+
+topics:
+  - ios
+  - swipe
+  - gesture
+  - navigation
+  - go-router
 
 environment:
   sdk: ^3.7.2
