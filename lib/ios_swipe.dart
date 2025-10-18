@@ -2,6 +2,7 @@ import 'dart:ui';
 
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
+//Copyright (c) 2025 exeshka
 
 class IosSwipePage<T> extends Page<T> {
   const IosSwipePage({
@@ -23,6 +24,8 @@ class IosSwipePage<T> extends Page<T> {
 }
 
 // ==================== _IosSwipeRoute ==================== //
+//Copyright (c) 2025 exeshka
+
 class _IosSwipeRoute<T> extends PageRoute<T> {
   _IosSwipeRoute(this.page) : super(settings: page);
 
