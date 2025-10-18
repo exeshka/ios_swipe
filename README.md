@@ -18,6 +18,14 @@ A lightweight Flutter package that brings **iOS-style swipe-back navigation** (l
 
 Add this package directly from GitHub:
 
+
+```yaml
+dependencies:
+  ios_swipe:
+   
+```
+## OR
+
 ```yaml
 dependencies:
   ios_swipe:
