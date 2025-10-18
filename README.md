@@ -5,6 +5,17 @@ A lightweight Flutter package that brings **iOS-style swipe-back navigation** (l
 
 ---
 
+## 🎥 Demo
+
+<video src="https://github.com/exeshka/ios_swipe/blob/main/video/example.mov" 
+  controls 
+  muted 
+  loop 
+  playsinline 
+  width="300">
+  Your browser does not support the video tag.
+</video>
+
 ## ✨ Features
 
 - 🧭 Smooth iOS-style back-swipe gesture  
