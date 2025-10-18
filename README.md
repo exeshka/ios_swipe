@@ -1,39 +1,94 @@
-<!--
-This README describes the package. If you publish this package to pub.dev,
-this README's contents appear on the landing page for your package.
+Конечно 👍 вот полностью готовый, красиво оформленный README.md в markdown-формате, готовый для GitHub или pub.dev:
 
-For information about how to write a good package README, see the guide for
-[writing package pages](https://dart.dev/tools/pub/writing-package-pages).
+# 🌀 ios_swipe
 
-For general information about developing packages, see the Dart guide for
-[creating packages](https://dart.dev/guides/libraries/create-packages)
-and the Flutter guide for
-[developing packages and plugins](https://flutter.dev/to/develop-packages).
--->
+A lightweight Flutter package that brings **iOS-style swipe-back navigation** (like in native iPhone apps) to your Flutter pages — especially useful when using **GoRouter**.
 
-TODO: Put a short description of the package here that helps potential users
-know whether this package might be useful for them.
+---
 
-## Features
+## ✨ Features
 
-TODO: List what your package can do. Maybe include images, gifs, or videos.
+- 🧭 Smooth iOS-style back-swipe gesture  
+- 💫 Seamless integration with `GoRouter`  
+- 🧱 Fully customizable transition  
+- 🔥 Works on both Android and iOS  
 
-## Getting started
+---
 
-TODO: List prerequisites and provide or point to information on how to
-start using the package.
+## 🚀 Getting Started
 
-## Usage
+Add this package directly from GitHub:
 
-TODO: Include short and useful examples for package users. Add longer examples
-to `/example` folder.
-
-```dart
-const like = 'sample';
+```yaml
+dependencies:
+  ios_swipe:
+    git:
+      url: https://github.com/exeshka/ios_swipe.git
+      ref: main
 ```
 
-## Additional information
+⸻
 
-TODO: Tell users more about the package: where to find more information, how to
-contribute to the package, how to file issues, what response they can expect
-from the package authors, and more.
+## 🧩 Usage Example
+
+# Integrate with GoRouter easily:
+```dart
+import 'package:flutter/material.dart';
+import 'package:go_router/go_router.dart';
+import 'package:ios_swipe/ios_swipe.dart';
+
+final goRouter = GoRouter(
+  initialLocation: FirstPage.path,
+  routes: [
+    GoRoute(
+      path: FirstPage.path,
+      name: FirstPage.name,
+      pageBuilder: (context, state) => IosSwipePage(
+        key: state.pageKey,
+        child: const FirstPage(),
+      ),
+    ),
+    GoRoute(
+      path: SecondPage.path,
+      name: SecondPage.name,
+      pageBuilder: (context, state) => IosSwipePage(
+        key: state.pageKey,
+        child: const SecondPage(),
+      ),
+      routes: [
+        GoRoute(
+          path: OtherScreen.path,
+          name: OtherScreen.name,
+          pageBuilder: (context, state) => IosSwipePage(
+            key: state.pageKey,
+            child: const OtherScreen(),
+          ),
+        ),
+      ],
+    ),
+  ],
+);
+```
+⸻
+
+# 📱 Platform Support
+
+# iOS	✅
+# Android	✅
+# Web	❌
+# Desktop	⚠️ (Experimental)
+
+
+⸻
+
+❤️ Contributing
+
+Pull requests and improvements are always welcome!
+If you find a bug or have an idea for improvement — feel free to open an issue.
+
+⸻
+
+# 📄 License
+
+This package is distributed under the MIT License.
+See the LICENSE file for more information.
