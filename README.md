@@ -7,9 +7,8 @@ A lightweight Flutter package that brings **iOS-style swipe-back navigation** wi
 ## 🎥 Demo
 
 <p align="center">
-  <img src="https://github.com/exeshka/ios_swipe/blob/main/video/git1.gif" alt="iOS Swipe Demo" width="300"/>
+  <img src="video/gif1.gif" alt="iOS Swipe Demo" width="300"/>
 </p>
-
 ---
 
 ## ✨ Features
