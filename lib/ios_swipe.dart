@@ -1,169 +1,172 @@
 import 'dart:ui';
-
-import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
+import 'package:go_router/go_router.dart';
+
 //Copyright (c) 2025 exeshka
 
-class IosSwipePage<T> extends Page<T> {
-  const IosSwipePage({
-    required this.child,
-    this.maintainState = false,
-    this.fullscreenDialog = false,
-    super.key,
-    super.name,
-    super.arguments,
-    super.restorationId,
-  });
-
-  final Widget child;
-  final bool maintainState;
-  final bool fullscreenDialog;
-
-  @override
-  Route<T> createRoute(BuildContext context) => _IosSwipeRoute<T>(this);
+/// Создаёт iOS-style transition с параллаксом и свайпом назад
+CustomTransitionPage<T> buildIosSwipeTransition<T>({
+  required Widget child,
+  required GoRouterState state,
+  bool maintainState = true,
+  bool fullscreenDialog = false,
+}) {
+  return CustomTransitionPage<T>(
+    key: state.pageKey,
+    name: state.name,
+    child: child,
+    maintainState: maintainState,
+    fullscreenDialog: fullscreenDialog,
+    transitionDuration: const Duration(milliseconds: 250),
+    transitionsBuilder: (context, animation, secondaryAnimation, child) {
+      return _IosSwipeTransition(
+        routeAnimation: animation as ProxyAnimation,
+        secondaryAnimation: secondaryAnimation,
+        child: child,
+      );
+    },
+  );
 }
 
-// ==================== _IosSwipeRoute ==================== //
-//Copyright (c) 2025 exeshka
+// ==================== _IosSwipeTransition ==================== //
 
-class _IosSwipeRoute<T> extends PageRoute<T> {
-  _IosSwipeRoute(this.page) : super(settings: page);
+class _IosSwipeTransition extends StatefulWidget {
+  const _IosSwipeTransition({
+    required this.routeAnimation,
+    required this.secondaryAnimation,
+    required this.child,
+  });
 
-  final IosSwipePage<T> page;
-  bool _canSwipe = false;
-
-  @override
-  bool get opaque => true;
-  @override
-  bool get barrierDismissible => true;
-  @override
-  Color? get barrierColor => null;
-  @override
-  String? get barrierLabel => null;
-  @override
-  bool get maintainState => page.maintainState;
-  @override
-  Duration get transitionDuration => const Duration(milliseconds: 250);
+  final ProxyAnimation routeAnimation;
+  final Animation<double> secondaryAnimation;
+  final Widget child;
 
   @override
-  Widget buildPage(
-    BuildContext context,
-    Animation<double> animation,
-    Animation<double> secondaryAnimation,
-  ) => page.child;
+  State<_IosSwipeTransition> createState() => _IosSwipeTransitionState();
+}
+
+class _IosSwipeTransitionState extends State<_IosSwipeTransition> {
+  AnimationController? _controller;
 
   @override
-  Widget buildTransitions(
-    BuildContext context,
-    Animation<double> animation,
-    Animation<double> secondaryAnimation,
-    Widget child,
-  ) {
-    final pages = Navigator.of(context).widget.pages;
+  void dispose() {
+    _controller?.dispose();
+    super.dispose();
+  }
 
-    if (pages.length > 1) {
-      _canSwipe = true;
-    } else {
-      _canSwipe = false;
+  bool get _canSwipe {
+    final router = GoRouter.of(context);
+    return router.canPop();
+  }
+
+  // Получаем реальный AnimationController из route
+  AnimationController? get _routeController {
+    final Animation<double>? parent = widget.routeAnimation.parent;
+    if (parent is AnimationController) {
+      return parent;
     }
+    return null;
+  }
 
-    final previousPage = _findPreviousPage(context);
+  @override
+  Widget build(BuildContext context) {
+    final width = MediaQuery.of(context).size.width;
+    final topPadding = MediaQuery.of(context).padding.top;
 
-    // текущая страница
-    final currentSlide = AnimatedBuilder(
-      animation: animation,
-      builder: (context, _) {
-        final width = MediaQuery.of(context).size.width;
-        final raduis =
-            animation.value == 1 ? 0.0 : MediaQuery.paddingOf(context).top;
-        final offsetX = (1.0 - animation.value) * width;
-        return Transform.translate(
-          offset: Offset(offsetX.clamp(0, width), 0),
-          child: ClipRRect(
-            borderRadius: BorderRadius.circular(raduis),
+    return Stack(
+      fit: StackFit.expand,
+      children: [
+        AnimatedBuilder(
+          animation: Listenable.merge([
+            widget.routeAnimation,
+            widget.secondaryAnimation,
+          ]),
+          builder: (context, _) {
+            // Радиус скругления при открытии
+            final radius =
+                widget.routeAnimation.value == 1.0 ? 0.0 : topPadding;
 
-            child: _buildSwipeGesture(context, child),
-          ),
-        );
-      },
-    );
+            // Основное движение при открытии
+            final offsetX = (1.0 - widget.routeAnimation.value) * width;
 
-    // предыдущая страница — лёгкий параллакс
-    final previousAnimated =
-        previousPage == null
-            ? const SizedBox.shrink()
-            : AnimatedBuilder(
-              animation: animation,
-              builder: (context, _) {
-                final width = MediaQuery.of(context).size.width;
-                final progress = animation.value;
-                final slideOffset = -width * 0.25 * progress;
-                return Transform(
-                  transform: Matrix4.identity()..translate(slideOffset),
-                  alignment: Alignment.centerLeft,
-                  child: IgnorePointer(ignoring: true, child: previousPage),
-                );
-              },
+            // Компенсация при закрытии следующей страницы
+            final compensation = 0.25 * width * widget.secondaryAnimation.value;
+
+            final finalOffset = offsetX - compensation;
+
+            return Transform.translate(
+              offset: Offset(finalOffset.clamp(-width, width), 0),
+              child: ClipRRect(
+                borderRadius: BorderRadius.circular(radius),
+                child: _buildSwipeGesture(context, widget.child, width),
+              ),
             );
-
-    return Container(
-      color: _canSwipe ? Colors.black : Colors.transparent,
-      child: Stack(children: [previousAnimated, currentSlide]),
+          },
+        ),
+      ],
     );
   }
 
-  /// добавляем свайп-жест на child
-
-  Widget _buildSwipeGesture(BuildContext context, Widget child) {
+  Widget _buildSwipeGesture(BuildContext context, Widget child, double width) {
     if (!_canSwipe) return child;
-
-    final width = MediaQuery.of(context).size.width;
-    double dragStartValue = 1.0;
 
     return GestureDetector(
       behavior: HitTestBehavior.translucent,
-      onHorizontalDragStart: (_) {
-        dragStartValue = controller?.value ?? 1.0;
-        controller?.stop();
+      onHorizontalDragStart: (details) {
+        final controller = _routeController;
+        if (controller != null) {
+          controller.stop();
+        }
       },
       onHorizontalDragUpdate: (details) {
-        if (!_canSwipe || controller?.isAnimating == true) return;
+        if (!_canSwipe) return;
 
-        // свайп вправо уменьшает value (от 1.0 → 0.0)
+        final controller = _routeController;
+        if (controller == null || controller.isAnimating) return;
+
         final delta = details.primaryDelta ?? 0.0;
         final progressDelta = delta / width;
-        final newValue = (controller!.value - progressDelta).clamp(0.0, 1.0);
-        controller!.value = newValue;
+
+        // Свайп вправо уменьшает прогресс (1.0 → 0.0)
+        final newValue = (controller.value - progressDelta).clamp(0.0, 1.0);
+        controller.value = newValue;
       },
       onHorizontalDragEnd: (details) {
         if (!_canSwipe) return;
 
+        final controller = _routeController;
+        if (controller == null) return;
+
         final velocity = details.velocity.pixelsPerSecond.dx;
-        final progress = controller!.value;
+        final progress = controller.value;
+
+        // Решаем, закрывать ли страницу
         final shouldPop = velocity > 500 || progress < 0.7;
 
         final target = shouldPop ? 0.0 : 1.0;
         final distance = (progress - target).abs();
         final duration = Duration(
-          milliseconds: lerpDouble(250, 600, distance)! ~/ 1,
+          milliseconds: lerpDouble(250, 600, distance)!.round(),
         );
 
         if (shouldPop) {
           void listener(AnimationStatus status) {
             if (status == AnimationStatus.completed) {
-              controller?.removeStatusListener(listener);
-              if (navigator?.canPop() ?? false) navigator?.pop();
+              controller.removeStatusListener(listener);
+              if (context.mounted && _canSwipe) {
+                GoRouter.of(context).pop();
+              }
             }
           }
 
-          controller?.addStatusListener(listener);
-          controller?.animateTo(
+          controller.addStatusListener(listener);
+          controller.animateTo(
             0.0,
             duration: duration,
             curve: Curves.easeOutCubic,
           );
         } else {
-          controller?.animateTo(
+          controller.animateTo(
             1.0,
             duration: duration,
             curve: Curves.easeOutCubic,
@@ -173,17 +176,27 @@ class _IosSwipeRoute<T> extends PageRoute<T> {
       child: child,
     );
   }
-
-  Widget? _findPreviousPage(BuildContext context) {
-    final pages = Navigator.of(context).widget.pages;
-    bool showBackButton = pages.length > 1;
-
-    final Page<dynamic>? page =
-        pages.length > 1 ? pages[pages.length - 2] : null;
-
-    if (page is IosSwipePage) return page.child;
-    if (page is CupertinoPage) return page.child;
-    if (page is MaterialPage) return page.child;
-    return null;
-  }
 }
+
+// ==================== Пример использования ==================== //
+
+/*
+final router = GoRouter(
+  routes: [
+    GoRoute(
+      path: '/',
+      pageBuilder: (context, state) => buildIosSwipeTransition(
+        child: HomePage(),
+        state: state,
+      ),
+    ),
+    GoRoute(
+      path: '/details',
+      pageBuilder: (context, state) => buildIosSwipeTransition(
+        child: DetailsPage(),
+        state: state,
+      ),
+    ),
+  ],
+);
+*/
