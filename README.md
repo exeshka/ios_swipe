@@ -1,112 +1,152 @@
-
 # 🌀 ios_swipe
 
-A lightweight Flutter package that brings **iOS-style swipe-back navigation** (like in native iPhone apps) to your Flutter pages — especially useful when using **GoRouter**.
+A lightweight Flutter package that brings **iOS-style swipe-back navigation** with **parallax effect** to your Flutter apps — just like native iPhone navigation. Perfect for **GoRouter** integration.
 
 ---
 
 ## 🎥 Demo
 
-<video src="https://github.com/exeshka/ios_swipe/blob/main/video/example.mov" 
-  controls 
-  muted 
-  loop 
-  playsinline 
-  width="300">
-  Your browser does not support the video tag.
-</video>
+<p align="center">
+  <img src="https://github.com/exeshka/ios_swipe/blob/main/video/git1.gif" alt="iOS Swipe Demo" width="300"/>
+</p>
+
+---
 
 ## ✨ Features
 
-- 🧭 Smooth iOS-style back-swipe gesture  
-- 💫 Seamless integration with `GoRouter`  
-- 🧱 Fully customizable transition  
-- 🔥 Works on both Android and iOS  
+- 🧭 **iOS-native swipe gesture** — Pull from the edge to go back
+- 💫 **Parallax effect** — Previous page slides smoothly like in iPhone
+- 🎯 **GoRouter ready** — Drop-in replacement for standard transitions
+- 🔥 **Fully interactive** — Page follows your finger in real-time
+- 🎨 **Rounded corners** — Automatically adds iOS-style border radius during swipe
+- ⚡ **Lightweight** — Zero dependencies, pure Flutter
 
 ---
 
 ## 🚀 Getting Started
 
-Add this package directly from GitHub:
-
+Add this package directly from PUB.DEV:
 
 ```yaml
 dependencies:
   ios_swipe:
-   
 ```
-## OR
+
+Or from GitHub:
 
 ```yaml
 dependencies:
   ios_swipe:
     git:
       url: https://github.com/exeshka/ios_swipe.git
-      ref: main
+      ref: main 
 ```
 
-⸻
+---
 
 ## 🧩 Usage Example
 
-# Integrate with GoRouter easily:
+### Basic Usage with GoRouter
+
 ```dart
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:ios_swipe/ios_swipe.dart';
 
-final goRouter = GoRouter(
-  initialLocation: FirstPage.path,
+void main() {
+  runApp(MyApp());
+}
+
+class MyApp extends StatelessWidget {
+  @override
+  Widget build(BuildContext context) {
+    return MaterialApp.router(
+      routerConfig: _router,
+      theme: ThemeData.dark(),
+    );
+  }
+}
+
+final _router = GoRouter(
   routes: [
     GoRoute(
-      path: FirstPage.path,
-      name: FirstPage.name,
-      pageBuilder: (context, state) => IosSwipePage(
-        key: state.pageKey,
-        child: const FirstPage(),
+      path: '/',
+      pageBuilder: (context, state) => buildIosSwipeTransition(
+        child: HomePage(),
+        state: state,
       ),
     ),
     GoRoute(
-      path: SecondPage.path,
-      name: SecondPage.name,
-      pageBuilder: (context, state) => IosSwipePage(
-        key: state.pageKey,
-        child: const SecondPage(),
+      path: '/details',
+      pageBuilder: (context, state) => buildIosSwipeTransition(
+        child: DetailsPage(),
+        state: state,
       ),
-      routes: [
-        GoRoute(
-          path: OtherScreen.path,
-          name: OtherScreen.name,
-          pageBuilder: (context, state) => IosSwipePage(
-            key: state.pageKey,
-            child: const OtherScreen(),
-          ),
-        ),
-      ],
+    ),
+    GoRoute(
+      path: '/profile',
+      pageBuilder: (context, state) => buildIosSwipeTransition(
+        child: ProfilePage(),
+        state: state,
+      ),
     ),
   ],
 );
 ```
-⸻
 
-# 📱 Platform Support
+### Custom Configuration
 
-# iOS	✅
-# Android	✅
-# Web	❌
-# Desktop	⚠️ (Experimental)
+```dart
+GoRoute(
+  path: '/settings',
+  pageBuilder: (context, state) => buildIosSwipeTransition(
+    child: SettingsPage(),
+    state: state,
+    maintainState: true,        // Keep state when navigating away
+    fullscreenDialog: false,    // Not a modal dialog
+  ),
+),
+```
+
+---
+
+## 🎮 How It Works
+
+1. **Swipe from left edge** — Start dragging from the left side of the screen
+2. **Page follows** — Current page moves right, previous page slides from behind
+3. **Release** — If you swiped more than 30% or with velocity > 500px/s, page pops
+4. **Snap back** — Otherwise, it smoothly returns to position
+
+**Just like iPhone! 📱**
+
+---
+
+## 📱 Platform Support
+
+| Platform | Status |
+|----------|--------|
+| iOS      | ✅ Full support |
+| Android  | ✅ Full support |
+| Web      | ❌ Not supported |
+| Desktop  | ⚠️ Experimental |
+
+---
 
 
-⸻
+## 🙏 Credits
 
-❤️ Contributing
+Made with ❤️ by [exeshka](https://github.com/exeshka)
 
-Pull requests and improvements are always welcome!
-If you find a bug or have an idea for improvement — feel free to open an issue.
+Inspired by iOS native navigation and the Flutter community.
 
-⸻
+---
 
-# 📄 License
+## 📚 Additional Resources
 
-This package is distributed under the MIT License.
-See the LICENSE file for more information.
+- [GoRouter Documentation](https://pub.dev/packages/go_router)
+- [Flutter Navigation Guide](https://docs.flutter.dev/development/ui/navigation)
+- [CustomTransitionPage API](https://api.flutter.dev/flutter/widgets/CustomTransitionPage-class.html)
+
+---
+
+**Star ⭐ this repo if you found it useful!** 
