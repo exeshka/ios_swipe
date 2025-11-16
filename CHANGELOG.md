@@ -1,4 +1,3 @@
-## 0.0.1
 
-## 1.1.0
-Update readme
+## 1.1.2
+Added support hero animations

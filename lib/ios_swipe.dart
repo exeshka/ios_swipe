@@ -2,9 +2,6 @@ import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 
-//Copyright (c) 2025 exeshka
-
-/// Создаёт iOS-style transition с параллаксом и свайпом назад
 CustomTransitionPage<T> buildIosSwipeTransition<T>({
   required Widget child,
   required GoRouterState state,
@@ -28,8 +25,6 @@ CustomTransitionPage<T> buildIosSwipeTransition<T>({
   );
 }
 
-// ==================== _IosSwipeTransition ==================== //
-
 class _IosSwipeTransition extends StatefulWidget {
   const _IosSwipeTransition({
     required this.routeAnimation,
@@ -46,20 +41,13 @@ class _IosSwipeTransition extends StatefulWidget {
 }
 
 class _IosSwipeTransitionState extends State<_IosSwipeTransition> {
-  AnimationController? _controller;
-
-  @override
-  void dispose() {
-    _controller?.dispose();
-    super.dispose();
-  }
+  bool _isDragging = false;
 
   bool get _canSwipe {
     final router = GoRouter.of(context);
     return router.canPop();
   }
 
-  // Получаем реальный AnimationController из route
   AnimationController? get _routeController {
     final Animation<double>? parent = widget.routeAnimation.parent;
     if (parent is AnimationController) {
@@ -82,23 +70,22 @@ class _IosSwipeTransitionState extends State<_IosSwipeTransition> {
             widget.secondaryAnimation,
           ]),
           builder: (context, _) {
-            // Радиус скругления при открытии
             final radius =
                 widget.routeAnimation.value == 1.0 ? 0.0 : topPadding;
 
-            // Основное движение при открытии
             final offsetX = (1.0 - widget.routeAnimation.value) * width;
-
-            // Компенсация при закрытии следующей страницы
             final compensation = 0.25 * width * widget.secondaryAnimation.value;
-
             final finalOffset = offsetX - compensation;
 
-            return Transform.translate(
-              offset: Offset(finalOffset.clamp(-width, width), 0),
-              child: ClipRRect(
-                borderRadius: BorderRadius.circular(radius),
-                child: _buildSwipeGesture(context, widget.child, width),
+            // КЛЮЧЕВОЙ МОМЕНТ: Отключаем Hero во время драга
+            return HeroMode(
+              enabled: false,
+              child: Transform.translate(
+                offset: Offset(finalOffset.clamp(-width, width), 0),
+                child: ClipRRect(
+                  borderRadius: BorderRadius.circular(radius),
+                  child: _buildSwipeGesture(context, widget.child, width),
+                ),
               ),
             );
           },
@@ -116,6 +103,10 @@ class _IosSwipeTransitionState extends State<_IosSwipeTransition> {
         final controller = _routeController;
         if (controller != null) {
           controller.stop();
+
+          // Уведомляем Navigator что идет жест
+          final navigatorState = Navigator.of(context);
+          navigatorState.didStartUserGesture.call();
         }
       },
       onHorizontalDragUpdate: (details) {
@@ -126,9 +117,8 @@ class _IosSwipeTransitionState extends State<_IosSwipeTransition> {
 
         final delta = details.primaryDelta ?? 0.0;
         final progressDelta = delta / width;
-
-        // Свайп вправо уменьшает прогресс (1.0 → 0.0)
         final newValue = (controller.value - progressDelta).clamp(0.0, 1.0);
+
         controller.value = newValue;
       },
       onHorizontalDragEnd: (details) {
@@ -139,8 +129,6 @@ class _IosSwipeTransitionState extends State<_IosSwipeTransition> {
 
         final velocity = details.velocity.pixelsPerSecond.dx;
         final progress = controller.value;
-
-        // Решаем, закрывать ли страницу
         final shouldPop = velocity > 500 || progress < 0.7;
 
         final target = shouldPop ? 0.0 : 1.0;
@@ -154,7 +142,15 @@ class _IosSwipeTransitionState extends State<_IosSwipeTransition> {
             if (status == AnimationStatus.completed) {
               controller.removeStatusListener(listener);
               if (context.mounted && _canSwipe) {
-                GoRouter.of(context).pop();
+                // Включаем Hero обратно перед pop
+                setState(() {
+                  _isDragging = false;
+                });
+                // Уведомляем Navigator что жест завершен
+                final navigatorState = Navigator.of(context);
+                (navigatorState as dynamic).didStopUserGesture?.call();
+
+                Navigator.pop(context);
               }
             }
           }
@@ -166,37 +162,26 @@ class _IosSwipeTransitionState extends State<_IosSwipeTransition> {
             curve: Curves.easeOutCubic,
           );
         } else {
-          controller.animateTo(
-            1.0,
-            duration: duration,
-            curve: Curves.easeOutCubic,
-          );
+          // Возвращаем обратно
+          controller
+              .animateTo(1.0, duration: duration, curve: Curves.easeOutCubic)
+              .then((_) {
+                if (mounted) {
+                  final navigatorState = Navigator.of(context);
+
+                  navigatorState.didStopUserGesture.call();
+                }
+              });
+        }
+      },
+      onHorizontalDragCancel: () {
+        if (_isDragging) {
+          // Уведомляем Navigator что жест отменен
+          final navigatorState = Navigator.of(context);
+          navigatorState.didStopUserGesture.call();
         }
       },
       child: child,
     );
   }
 }
-
-// ==================== Пример использования ==================== //
-
-/*
-final router = GoRouter(
-  routes: [
-    GoRoute(
-      path: '/',
-      pageBuilder: (context, state) => buildIosSwipeTransition(
-        child: HomePage(),
-        state: state,
-      ),
-    ),
-    GoRoute(
-      path: '/details',
-      pageBuilder: (context, state) => buildIosSwipeTransition(
-        child: DetailsPage(),
-        state: state,
-      ),
-    ),
-  ],
-);
-*/
